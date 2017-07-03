@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.6)
-project(mayaCurveMatch)
-set(CMD_NAME curveMatch)
+cmake_minimum_required(VERSION 2.8)
+project(mayaAnimCurveMatch)
+set(CMD_NAME animCurveMatch)
 set(CMAKE_CXX_STANDARD 11)
 # set(CMAKE_BUILD_TYPE DEBUG)
 set(CMAKE_BUILD_TYPE RELEASE)
@@ -24,10 +24,10 @@ set(UTILITIES_FILES
 #
 set(SOURCE_FILES
         ${UTILITIES_FILES}
-        include/curveMatchCmd.h
-        include/curveMatchUtils.h
-        src/curveMatchCmd.cpp
-        src/curveMatchMain.cpp)
+        include/animCurveMatchCmd.h
+        include/animCurveMatchUtils.h
+        src/animCurveMatchCmd.cpp
+        src/animCurveMatchMain.cpp)
 
 include_directories(
         include
@@ -42,9 +42,7 @@ link_directories(
         ${MAYA_LIB}
 )
 
-#add_executable(mayaCurveFit ${SOURCE_FILES}
-
-# 'curveFitCmd' maya plugin library
+# 'animCurveMatchCmd' maya plugin library
 add_library(${CMD_NAME} SHARED ${SOURCE_FILES})
 target_link_libraries(${CMD_NAME}
         OpenMaya

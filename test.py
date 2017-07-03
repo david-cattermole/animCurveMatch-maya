@@ -11,8 +11,8 @@ start = 1
 end = 10
 
 maya.cmds.file(new=True, force=True)
-maya.cmds.unloadPlugin('curveMatch')
-maya.cmds.loadPlugin('curveMatch')
+maya.cmds.unloadPlugin('animCurveMatch')
+maya.cmds.loadPlugin('animCurveMatch')
 
 tfm, shp = maya.cmds.polySphere()
 print 'tfm:', tfm
@@ -32,4 +32,4 @@ dstCurve = maya.cmds.listConnections(tfm + '.translateX', type='animCurve')[0]
 print 'srcCurve:', srcCurve
 print 'dstCurve:', dstCurve
 
-print maya.cmds.curveMatch(srcCurve, dstCurve, iterations=1000)
+print maya.cmds.animCurveMatch(srcCurve, dstCurve, iterations=1000)
