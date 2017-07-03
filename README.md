@@ -2,11 +2,11 @@
 
 Matches a sparse Maya animCurve to a dense animCurve using a Non-linear Least Squares algorithm.
 
-This plug-in command is functional with basic features, but not ready for production yet. It should be improved for robustness, performance and error handling.
+This plug-in command is functional with basic features, but not ready for production yet. This command does not yet support undo. It should be improved for robustness, performance, error handling and undo.
 
 ## Features
 
-- Calculates animCurve keyframe values and tangents to fit a different curve (dense or sparse). 
+- Calculates animCurve keyframe values and tangents to fit a different animCurve (dense or sparse).
 
 ## Usage
 
@@ -18,7 +18,7 @@ import math
 import maya.cmds
 
 # Load Plugin
-maya.cmds.loadPlugin('curveMatch')
+maya.cmds.loadPlugin('animCurveMatch')
 
 tfm, shp = maya.cmds.polySphere()
 
@@ -34,14 +34,12 @@ srcCurve = maya.cmds.listConnections(tfm + '.translateZ', type='animCurve')[0]
 dstCurve = maya.cmds.listConnections(tfm + '.translateX', type='animCurve')[0]
 
 # Run command! This will modify 'dstCurve' animCurve.
-maya.cmds.curveMatch(srcCurve, dstCurve, iterations=1000)
+maya.cmds.animCurveMatch(srcCurve, dstCurve, iterations=1000)
 ```
 
 _See 'test.py' for more details_
 
 ## Building and Install
-
-_To be written._
 
 ### Dependencies
 
@@ -50,13 +48,23 @@ _To be written._
 - levmar 2.6+ (http://users.ics.forth.gr/~lourakis/levmar/)
 - Autodesk Maya 2016+
 
-### Build
+### Build and Install
 
-_To be written._
+A build assumes the CMakeLists.txt is set up correctly, including LEVMAR_ROOT and MAYA_ROOT are set correctly. 
+  
+Run the following in a Bash-like shell:
+```commandline
+# Build
+$ cd <project root>
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make -j 4
 
-### Install
-
-_To be written._
+# Install
+$ mkdir ~/maya/<maya version>/plug-ins
+$ cp animCurveMatch.so ~/maya/<maya version>/plug-ins
+```
 
 ## Limitations and Known Bugs 
 
