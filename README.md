@@ -68,4 +68,5 @@ $ cp animCurveMatch.so ~/maya/<maya version>/plug-ins
 
 ## Limitations and Known Bugs 
 
-- None known.
+- Undo is not yet supported.
+- No ability to create a new curve, we always modify the destination curve.
