@@ -63,6 +63,14 @@ struct CurveData {
     // Source and destination curves.
     MFnAnimCurve *srcCurveFn;
     MFnAnimCurve *dstCurveFn;
+
+    // Options
+    bool adjustValues;
+    bool adjustTimes;
+    bool adjustTangentAngles;
+    bool adjustTangentWeights;
+    bool forceWholeFrames;
+    bool addKeys;
 };
 
 
@@ -72,23 +80,42 @@ void curveFunc(double *p, double *x, int m, int n, void *data) {
     CurveData *userData = (CurveData *) data;
 
     // Set curve using parameters.
+    MTime::Unit unit = MTime::uiUnit();
     const MAngle::Unit degUnit = MAngle::kDegrees;
-    for (i = 0; i < (m / 3); ++i) {
-        double v = p[(i * 3) + 0];
-        double it = p[(i * 3) + 1];
-        double ot = p[(i * 3) + 2];
+    for (i = 0; i < (m / 6); ++i) {
+        double t = p[(i * 6) + 0];  // time
+        double v = p[(i * 6) + 1];  // value
+        double it = p[(i * 6) + 2]; // in-tangent angle
+        double ot = p[(i * 6) + 3]; // out-tangent angle
+        double iw = p[(i * 6) + 4]; // in-tangent weight
+        double ow = p[(i * 6) + 5]; // out-tangent weight
         MAngle ia(it, degUnit);
         MAngle oa(ot, degUnit);
 
-        userData->dstCurveFn->setValue((unsigned int) i, v);
-        userData->dstCurveFn->setAngle((unsigned int) i, ia, true);
-        userData->dstCurveFn->setAngle((unsigned int) i, oa, false);
+        if (userData->adjustTimes) {
+            if (userData->forceWholeFrames){
+                t = double(int(t));
+            }
+//            INFO("t=" << t);
+            MTime time(t, unit);
+            userData->dstCurveFn->setTime((unsigned int) i, time);
+        }
+        if (userData->adjustValues) {
+            userData->dstCurveFn->setValue((unsigned int) i, v);
+        }
+        if (userData->adjustTangentAngles) {
+            userData->dstCurveFn->setAngle((unsigned int) i, ia, true);
+            userData->dstCurveFn->setAngle((unsigned int) i, oa, false);
+        }
+//        if (userData->adjustTangentWeights) {
+//            userData->dstCurveFn->setWeight((unsigned int) i, iw, true);
+//            userData->dstCurveFn->setWeight((unsigned int) i, ow, false);
+//        }
     }
 
     unsigned int srcNumKeys = userData->srcCurveFn->numKeys();
     unsigned int dstNumKeys = userData->dstCurveFn->numKeys();
 
-    MTime::Unit unit = MTime::uiUnit();
     MTime startTime = userData->srcCurveFn->time(0);
     MTime endTime = userData->srcCurveFn->time(srcNumKeys - 1);
     double start = startTime.asUnits(unit);
@@ -111,28 +138,38 @@ inline
 bool solveCurveFit(int iterMax,
                    MObject &srcCurve,
                    MObject &dstCurve,
+                   bool adjustValues,
+                   bool adjustTimes,
+                   bool adjustTangentAngles,
+                   bool adjustTangentWeights,
+                   bool scaleTimeKeys,
+                   bool forceWholeFrames,
+                   bool addKeys,
                    double &outError) {
     register int i, j;
     int ret;
 
     MFnAnimCurve *srcCurveFn = new MFnAnimCurve(srcCurve);
     MFnAnimCurve *dstCurveFn = new MFnAnimCurve(dstCurve);
+    // TODO: Try adding new keys to reduce the error, if this is required. This would require a second loop
     unsigned int srcNumKeys = srcCurveFn->numKeys();
     unsigned int dstNumKeys = dstCurveFn->numKeys();
     assert(srcNumKeys >= 2);
     assert(dstNumKeys >= 2);
 
     // Number of unknown parameters.
-    // For each keyframe, a value, in and out tangents will be calculated.
-    const int m = dstNumKeys * 3;
+    // For each keyframe, a time, value, in / out tangent angles and weights may be calculated.
+    const int m = dstNumKeys * 6;
     double params[m];
 
     // Number of measurement errors. (Must be less than unknown parameters).
     // This is the number of integer frames between the
     // start and end frames of the source curve
     MTime::Unit unit = MTime::uiUnit();
-    MTime startTime = srcCurveFn->time(0);
-    MTime endTime = srcCurveFn->time(srcNumKeys - 1);
+    unsigned int srcFirstKey = 0;
+    unsigned int srcLastKey = srcNumKeys - 1;
+    MTime startTime = srcCurveFn->time(srcFirstKey);
+    MTime endTime = srcCurveFn->time(srcLastKey);
     double start = startTime.asUnits(unit);
     double end = endTime.asUnits(unit);
     int frames = int(end) - int(start);
@@ -145,35 +182,110 @@ bool solveCurveFit(int iterMax,
     INFO("n=" << n);
     assert(m <= n);
 
-    // TODO: Force destination curve to unlocked tangents and locked weights.
+    // Stretch out the curves to align to the source start/end key frames.
+    if (scaleTimeKeys) {
+        dstCurveFn->setPreInfinityType(MFnAnimCurve::kLinear);
+        dstCurveFn->setPostInfinityType(MFnAnimCurve::kLinear);
+        unsigned int dstFirstKey = 0;
+        unsigned int dstLastKey = dstNumKeys - 1;
+        MTime prevStart = dstCurveFn->time(dstFirstKey);
+        MTime prevEnd = dstCurveFn->time(dstLastKey);
+
+        // Change times.
+        MTimeArray times;
+        times.append(startTime);
+        MTime midTime;
+        MTime prevMid;
+        for (unsigned int k=1; k<(dstNumKeys-1); ++k) {
+            prevMid = dstCurveFn->time(k);
+
+            // TODO: The 'mid' values are still a little wrong.
+            double newDist = endTime.asUnits(unit) - startTime.asUnits(unit);
+            double prevDist = prevEnd.asUnits(unit) - prevStart.asUnits(unit);
+            double prevMidRatio = (prevMid.asUnits(unit) - prevStart.asUnits(unit)) / prevEnd.asUnits(unit);
+            double mid = ((startTime.asUnits(unit) * prevMidRatio) +
+                    ((prevEnd.asUnits(unit) * ((newDist + 1.0) / prevDist)) * prevMidRatio));
+
+            if (forceWholeFrames) {
+                midTime = MTime(double(int(mid)), unit);
+            } else {
+                midTime = MTime(mid, unit);
+            }
+
+            times.append(midTime);
+        }
+        times.append(endTime);
+
+        // Set Keyframes in reverse, so we don't break the indexes.
+        for (int k=times.length()-1; k>=0; --k) {
+            dstCurveFn->setTime((unsigned int) k, times[k]);
+        }
+    }
 
     // Standard Lev-Mar arguments.
     double opts[LM_OPTS_SZ];
     double info[LM_INFO_SZ];
 
     // Options
-    opts[0] = LM_INIT_MU * 100.0;
+    // NOTE: Init and diff delta values are large enough to move the frame by one value.
+    opts[0] = LM_INIT_MU * 10000000.0; //  * 100.0;
     opts[1] = 1E-15;
     opts[2] = 1E-15;
     opts[3] = 1E-20;
-    opts[4] = -LM_DIFF_DELTA * 10.0;
+    opts[4] = -LM_DIFF_DELTA * 1000000.0; //  * 10.0;
 
     struct CurveData userData;
     userData.srcCurveFn = srcCurveFn;
     userData.dstCurveFn = dstCurveFn;
+    userData.adjustValues = adjustValues;
+    userData.adjustTimes = adjustTimes;
+    userData.adjustTangentAngles = adjustTangentAngles;
+    userData.adjustTangentWeights = adjustTangentWeights;
+    userData.forceWholeFrames = forceWholeFrames;
+    userData.addKeys = addKeys;
+
+//    // Ensure we can unlock weights if we will calculate the weights
+//    if (adjustTangentWeights)
+//    {
+//        dstCurveFn->setIsWeighted(true);
+//    }
 
     // Set Initial parameters
-    for (i = 0; i < (m / 3); ++i) {
+    for (i = 0; i < (m / 6); ++i) {
+        // Get time
+        double t = 0.0;
+//        if (dstCurveFn->isTimeInput()) {
+        MTime time = dstCurveFn->time((unsigned int) i);
+        t = time.asUnits(MTime::uiUnit());
+//        INFO("t=" << t);
+//        } else{
+//            t = dstCurveFn->unitlessInput((unsigned int) i);
+//        }
+
+        // Value
         double v = dstCurveFn->value((unsigned int) i);
+
+//        // Ensure weights are unlocked if we will calculate the weights
+//        if (adjustTangentWeights)
+//        {
+//            dstCurveFn->setWeightsLocked(0, false);
+//        }
+
+        // Tangents angle and weights
         MAngle ia = 0;
         MAngle oa = 0;
         double iw = 1.0;
         double ow = 1.0;
         dstCurveFn->getTangent((unsigned int) i, ia, iw, true);
         dstCurveFn->getTangent((unsigned int) i, oa, ow, true);
-        params[(i * 3) + 0] = v; // value
-        params[(i * 3) + 1] = ia.asDegrees(); // in-tangent angle
-        params[(i * 3) + 2] = oa.asDegrees(); // out-tangent angle
+
+        // Set into data structure.
+        params[(i * 6) + 0] = t; // time
+        params[(i * 6) + 1] = v; // value
+        params[(i * 6) + 2] = ia.asDegrees(); // in-tangent angle
+        params[(i * 6) + 3] = oa.asDegrees(); // out-tangent angle
+        params[(i * 6) + 4] = iw; // in-tangent weight
+        params[(i * 6) + 5] = ow; // out-tangent weight
     }
 
     // Initial Parameters
