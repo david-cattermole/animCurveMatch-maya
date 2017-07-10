@@ -27,6 +27,7 @@
 #include <maya/MString.h>
 #include <maya/MObject.h>
 #include <maya/MFnAnimCurve.h>
+#include <maya/MAnimCurveChange.h>
 
 
 // Lev-Mar Termination Reasons:
@@ -63,13 +64,17 @@ struct CurveData {
     // Source and destination curves.
     MFnAnimCurve *srcCurveFn;
     MFnAnimCurve *dstCurveFn;
+
+    MAnimCurveChange *animChange;
 };
 
 
+// Function run by lev-mar algorith to test the input parameters, p, and compute the output errors, x.
 inline
 void curveFunc(double *p, double *x, int m, int n, void *data) {
     register int i, j;
     CurveData *userData = (CurveData *) data;
+
 
     // Set curve using parameters.
     const MAngle::Unit degUnit = MAngle::kDegrees;
@@ -80,9 +85,9 @@ void curveFunc(double *p, double *x, int m, int n, void *data) {
         MAngle ia(it, degUnit);
         MAngle oa(ot, degUnit);
 
-        userData->dstCurveFn->setValue((unsigned int) i, v);
-        userData->dstCurveFn->setAngle((unsigned int) i, ia, true);
-        userData->dstCurveFn->setAngle((unsigned int) i, oa, false);
+        userData->dstCurveFn->setValue((unsigned int) i, v, userData->animChange);
+        userData->dstCurveFn->setAngle((unsigned int) i, ia, true, userData->animChange);
+        userData->dstCurveFn->setAngle((unsigned int) i, oa, false, userData->animChange);
     }
 
     unsigned int srcNumKeys = userData->srcCurveFn->numKeys();
@@ -111,6 +116,7 @@ inline
 bool solveCurveFit(int iterMax,
                    MObject &srcCurve,
                    MObject &dstCurve,
+                   MAnimCurveChange &animChange,
                    double &outError) {
     register int i, j;
     int ret;
@@ -161,6 +167,7 @@ bool solveCurveFit(int iterMax,
     struct CurveData userData;
     userData.srcCurveFn = srcCurveFn;
     userData.dstCurveFn = dstCurveFn;
+    userData.animChange = &animChange;
 
     // Set Initial parameters
     for (i = 0; i < (m / 3); ++i) {
@@ -188,7 +195,7 @@ bool solveCurveFit(int iterMax,
     double *work, *covar;
     work = (double *) malloc((LM_DIF_WORKSZ(m, n) + m * m) * sizeof(double));
     if (!work) {
-        ERR("Memory allocation request failed in myLibrary()");
+        ERR("Memory allocation request failed.");
         delete srcCurveFn;
         delete dstCurveFn;
         return false;

@@ -20,6 +20,7 @@
 #include <maya/MItSelectionList.h>
 #include <maya/MDagPath.h>
 #include <maya/MFnAnimCurve.h>
+#include <maya/MAnimCurveChange.h>
 #include <maya/MFnDagNode.h>
 
 #include <maya/MPoint.h>
@@ -42,10 +43,12 @@ public:
 
     virtual ~animCurveMatchCmd();
 
-    virtual bool hasSyntax();
+    virtual bool hasSyntax() const;
     static MSyntax newSyntax();
 
     virtual MStatus doIt(const MArgList &args);
+
+    virtual bool isUndoable() const;
 
     virtual MStatus undoIt();
 
@@ -56,8 +59,9 @@ public:
 private:
     MStatus parseArgs( const MArgList& args );
 
-    MObject m_srcCurve;
-    MObject m_dstCurve;
+    MString m_srcCurveName;
+    MString m_dstCurveName;
+    MAnimCurveChange m_animChange;
 
     unsigned int m_iterations;
 };

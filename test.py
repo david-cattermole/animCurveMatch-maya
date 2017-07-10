@@ -13,6 +13,9 @@ end = 10
 maya.cmds.file(new=True, force=True)
 maya.cmds.unloadPlugin('animCurveMatch')
 maya.cmds.loadPlugin('animCurveMatch')
+maya.cmds.undoInfo(state=True, infinity=True)
+print 'undo length:', maya.cmds.undoInfo(q=True, length=True)
+print 'undo queue:', maya.cmds.undoInfo(q=True, printQueue=True)
 
 tfm, shp = maya.cmds.polySphere()
 print 'tfm:', tfm
@@ -32,4 +35,29 @@ dstCurve = maya.cmds.listConnections(tfm + '.translateX', type='animCurve')[0]
 print 'srcCurve:', srcCurve
 print 'dstCurve:', dstCurve
 
-print maya.cmds.animCurveMatch(srcCurve, dstCurve, iterations=1000)
+print 'before:', maya.cmds.keyframe(tfm,
+                                    query=True,
+                                    attribute='translateX',
+                                    valueChange=True) or []
+
+err = maya.cmds.animCurveMatch(srcCurve, dstCurve, iterations=1000)
+print 'error level:', err
+
+# Test Undo / Redo
+# maya.cmds.ls(type='animCurve') or []
+
+maya.cmds.undo()
+print 'between:', maya.cmds.keyframe(tfm,
+                                     query=True,
+                                     attribute='translateX',
+                                     valueChange=True) or []
+maya.cmds.redo()
+print 'after:', maya.cmds.keyframe(tfm,
+                                   query=True,
+                                   attribute='translateX',
+                                   valueChange=True) or []
+
+print 'undo length:', maya.cmds.undoInfo(q=True, length=True)
+print 'undo queue:', maya.cmds.undoInfo(q=True, printQueue=True)
+
+# maya.cmds.quit(force=True)
