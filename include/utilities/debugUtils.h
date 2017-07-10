@@ -37,7 +37,7 @@ namespace debug
   // http://stackoverflow.com/questions/13772567/get-cpu-cycle-count
 #ifdef _WIN32
   //  Windows
-  #rspImagePlane <intrin.h>
+  #include <intrin.h>
 uint64_t rdtsc(){
     return __rdtsc();
 }
