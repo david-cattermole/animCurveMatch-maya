@@ -35,7 +35,7 @@
 
 #define kIterationsFlag          "-it"
 #define kIterationsFlagLong      "-iterations"
-#define kIterationsDefaultValue  100
+#define kIterationsDefaultValue  1000
 
 #define kAdjustValuesFlag          "-avl"
 #define kAdjustValuesFlagLong      "-adjustValues"
