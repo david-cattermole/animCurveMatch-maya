@@ -7,22 +7,23 @@ import math
 import maya.cmds
 
 
-start = 1
-end = 10
+start = 10
+end = 20
+mid = start + ((end - start) * 0.5)
 
 maya.cmds.file(new=True, force=True)
 maya.cmds.unloadPlugin('animCurveMatch')
 maya.cmds.loadPlugin('animCurveMatch')
 maya.cmds.undoInfo(state=True, infinity=True)
-print 'undo length:', maya.cmds.undoInfo(q=True, length=True)
-print 'undo queue:', maya.cmds.undoInfo(q=True, printQueue=True)
 
 tfm, shp = maya.cmds.polySphere()
 print 'tfm:', tfm
 print 'shp:', shp
 
-maya.cmds.setKeyframe(tfm, attribute='translateX', time=start, value=10)
-maya.cmds.setKeyframe(tfm, attribute='translateX', time=end, value=-10)
+maya.cmds.setKeyframe(tfm, attribute='translateX', time=1, value=10)
+maya.cmds.setKeyframe(tfm, attribute='translateX', time=5, value=-10)
+maya.cmds.setKeyframe(tfm, attribute='translateX', time=6, value=10)
+maya.cmds.setKeyframe(tfm, attribute='translateX', time=10, value=-10)
 
 for i in range(start, end+1):
     v = math.cos((float(i-1) / float(end-1)) * math.pi)
@@ -35,6 +36,22 @@ dstCurve = maya.cmds.listConnections(tfm + '.translateX', type='animCurve')[0]
 print 'srcCurve:', srcCurve
 print 'dstCurve:', dstCurve
 
+err = maya.cmds.animCurveMatch(srcCurve, dstCurve,
+                               iterations=1000,
+                               # newCurve=True,
+                               # name='myAwesomeNewCurve1',
+                               adjustValues=True,
+                               adjustTimes=False,
+                               adjustTangentAngles=True,
+                               adjustTangentWeights=False,
+                               scaleTimeKeys=True,
+                               forceWholeFrames=True)
+print 'error level:', err
+
+nodes =  maya.cmds.ls(type='animCurve')
+maya.cmds.select(nodes, replace=True)
+print nodes
+
 print 'before:', maya.cmds.keyframe(tfm,
                                     query=True,
                                     attribute='translateX',
@@ -42,9 +59,6 @@ print 'before:', maya.cmds.keyframe(tfm,
 
 err = maya.cmds.animCurveMatch(srcCurve, dstCurve, iterations=1000)
 print 'error level:', err
-
-# Test Undo / Redo
-# maya.cmds.ls(type='animCurve') or []
 
 maya.cmds.undo()
 print 'between:', maya.cmds.keyframe(tfm,
@@ -56,8 +70,5 @@ print 'after:', maya.cmds.keyframe(tfm,
                                    query=True,
                                    attribute='translateX',
                                    valueChange=True) or []
-
-print 'undo length:', maya.cmds.undoInfo(q=True, length=True)
-print 'undo queue:', maya.cmds.undoInfo(q=True, printQueue=True)
 
 # maya.cmds.quit(force=True)

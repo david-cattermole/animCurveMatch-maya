@@ -2,13 +2,28 @@
 
 Matches a sparse Maya animCurve to a dense animCurve using a Non-linear Least Squares algorithm.
 
-This plug-in command is functional with basic features, but not ready for production yet. This command does not yet support undo. It should be improved for robustness, performance, error handling and undo.
+This plug-in command can be used to help create simplified animCurves using less keyframes, while matching closely to the original densely baked animation curve.
+
+Uses of this plug-in are:
+- animCurve sub-division (increasing keyframes)
+- animCurve keyframe reduction (used to match to a reference curve)
+- Motion Capture animCurve clean-up and re-targeting.
+- Animated space switching, while keeping world space positioning (re-parenting a child node into world, while keeping the original keyframe positions, and re-adjusting tangents).
 
 ## Features
 
-- Calculates animCurve keyframe values and tangents to fit a different animCurve (dense or sparse).
+- Calculates animCurve keyframe values, tangents and times to fit a different animCurve (dense or sparse).
+- Ability to adjusting:
+  - Keyframe Value
+  - Keyframe Time
+  - Keyframe Tangents
+- Creation of new animCurve curve, with given name.
+- When start/end keyframe times do not match source curve, scaling the destination curve to the correct start/end times is possible.
+- Maya Undo / Redo support.
 
 ## Usage
+
+Here is a simple example of how to use the animCurveMatch command.
 
 ```python
 start = 1
@@ -53,15 +68,18 @@ _See 'test.py' for more details_
 A build assumes the CMakeLists.txt is set up correctly, including LEVMAR_ROOT and MAYA_ROOT are set correctly. 
   
 Run the following in a Bash-like shell:
+
+#### Build
 ```commandline
-# Build
 $ cd <project root>
 $ mkdir build
 $ cd build
 $ cmake ..
 $ make -j 4
+```
 
-# Install
+#### Install
+```commandline
 $ mkdir ~/maya/<maya version>/plug-ins
 $ cp animCurveMatch.so ~/maya/<maya version>/plug-ins
 ```
