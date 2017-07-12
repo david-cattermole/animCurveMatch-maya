@@ -54,6 +54,40 @@ maya.cmds.animCurveMatch(srcCurve, dstCurve, iterations=1000)
 
 _See 'test.py' for more details_
 
+## Command Flags
+
+The command syntax is:
+```text
+animCurveMatch <source> <destination> [flags]
+```
+
+The command can be run in both MEL and Python.
+
+MEL:
+```text
+animCurveMatch "srcCurve" "dstCurve" -iterations 1000;
+```
+
+Python:
+```python
+maya.cmds.animCurveMatch("srcCurve", "dstCurve", iterations=1000)
+```
+
+Here is a table of command flags, as currently specified in the command. Note some are "UNSUPPORTED", these flags have been added, but do not function correctly.
+
+| Flag         | Type          | Description | Default Value |
+| ------------ | ------------- | ----------- | ------------- |
+| -name (-n)   | string        | The name for the new animCurve created, must be a unique name. | name_solved |
+| -iterations (-it) | int | Number of iterations to perform. | 1000 |
+| -adjustValues (-avl) | bool | Adjust the keyframe values to minimise differences. | true |
+| -adjustTimes (-atm) | bool | Adjust the keyframe times to minimise differences. | false |
+| -adjustTangentAngles (-ata) | bool | Adjust the keyframe tangent angles to minimise differences. | true |
+| -adjustTangentWeights (-atw) | bool | UNSUPPORTED - Adjust the keyframe tangent angles to minimise differences. | false |
+| -forceWholeFrames (-fwf) | bool | When adjusting keyframe times, only modify time values by +/- 1.0. | true |
+| -scaleTimeKeys (-stk) | bool | Re-maps destination animCurves keyframe times to start/end of source animCurve. | true |
+| -addKeys (-ak) | bool | UNSUPPORTED - Allow adding keyframes to reduce the error. | false |
+| -newCurve (-nw) | bool | If true, the destination animCurve is copied and renamed, otherwise the destination animCurve is modified in-place. | false |
+
 ## Building and Install
 
 ### Dependencies
@@ -86,5 +120,5 @@ $ cp animCurveMatch.so ~/maya/<maya version>/plug-ins
 
 ## Limitations and Known Bugs 
 
-- Undo is not yet supported.
-- No ability to create a new curve, we always modify the destination curve.
+- Adjusting Tangent Weights does not currently work.
+- Adding or removing keyframes is not supported.
