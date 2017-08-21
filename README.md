@@ -98,21 +98,76 @@ Here is a table of command flags, as currently specified in the command. Note so
 - Autodesk Maya 2016+
 
 ### Build and Install
-
-A build assumes the CMakeLists.txt is set up correctly, including LEVMAR_ROOT and MAYA_ROOT are set correctly. 
   
 Run the following in a Bash-like shell:
 
-#### Build
+#### Build Levmar
+
+Building Levmar is quite simple. Levmar does not have an 'make install', and it will only compile a static library, which we will link against in the next step.
+
+```commandline
+$ tar -xf levmar-2.6.tgz
+$ cd levmar-2.6
+$ mkdir build
+$ cd build
+$ cmake -DNEED_F2C=0 -DHAVE_LAPACK=0 -DBUILD_DEMO=0 ..
+-- The C compiler identification is GNU 4.4.7
+-- The CXX compiler identification is GNU 4.4.7
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /path/to/example/directory/levmar-2.6/build
+$ make
+Scanning dependencies of target levmar
+[ 14%] Building C object CMakeFiles/levmar.dir/lm.c.o
+[ 28%] Building C object CMakeFiles/levmar.dir/Axb.c.o
+[ 42%] Building C object CMakeFiles/levmar.dir/misc.c.o
+In file included from /home/davidc/bin/levmar/test/levmar-2.6/misc.c:47:
+/path/to/example/directory/levmar-2.6/misc_core.c:577:2: warning: #warning LAPACK not available, LU will be used for matrix inversion when computing the covariance; this might be unstable at times
+In file included from /path/to/example/directory/levmar-2.6/misc.c:64:
+/path/to/example/directory/levmar-2.6/misc_core.c:577:2: warning: #warning LAPACK not available, LU will be used for matrix inversion when computing the covariance; this might be unstable at times
+[ 57%] Building C object CMakeFiles/levmar.dir/lmlec.c.o
+/path/to/example/directory/levmar-2.6/lmlec.c:39:2: warning: #warning Linearly constrained optimization requires LAPACK and was not compiled!
+[ 71%] Building C object CMakeFiles/levmar.dir/lmbc.c.o
+[ 85%] Building C object CMakeFiles/levmar.dir/lmblec.c.o
+/path/to/example/directory/levmar-2.6/lmblec.c:39:2: warning: #warning Combined box and linearly constrained optimization requires LAPACK and was not compiled!
+[100%] Building C object CMakeFiles/levmar.dir/lmbleic.c.o
+/path/to/example/directory/levmar-2.6/lmbleic.c:40:2: warning: #warning Linear inequalities constrained optimization requires LAPACK and was not compiled!
+Linking C static library liblevmar.a
+[100%] Built target levmar
+$ ls -l -h liblevmar.a
+-rw-rw-r--. 1 user user 97K Aug 22 13:19 liblevmar.a
+```
+
+Note we do not use the LAPACK library, we do not need it. If you would like to compile with LAPACK, you'll need to change your cmake flags accordingly.
+
+#### Build animCurveMatch
+
+To compile the Maya plugin, run the commands.
+
 ```commandline
 $ cd <project root>
 $ mkdir build
 $ cd build
-$ cmake ..
+$ cmake \
+  -DMAYA_INCLUDE_PATH=/path/to/maya/include \
+  -DMAYA_LIB_PATH=/path/to/maya/lib \
+  -DLEVMAR_LIB_PATH=/path/to/levmar/lib
+  -DLEVMAR_INCLUDE_PATH=/path/to/levmar/include ..
 $ make -j 4
 ```
 
-#### Install
+#### Install animCurveMatch
+
+Now lets install into our home directory maya 'plug-ins' directory.
+
 ```commandline
 $ mkdir ~/maya/<maya version>/plug-ins
 $ cp animCurveMatch.so ~/maya/<maya version>/plug-ins
