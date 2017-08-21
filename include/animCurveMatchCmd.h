@@ -1,5 +1,5 @@
 /*
- *
+ * Header for animCurveMatch Maya command.
  */
 
 #ifndef MAYA_ANIM_CURVE_MATCH_CMD_H

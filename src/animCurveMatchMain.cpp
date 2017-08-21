@@ -1,5 +1,5 @@
 /*
- *
+ * Main Maya plugin entry point.
  */
 
 

@@ -1,5 +1,7 @@
 /*
+ * Command for running animCurveMatch.
  *
+ * Contains undo/redo functionality.
  */
 
 
@@ -11,7 +13,7 @@
 #include <cmath>
 
 // Utils
-#include <debugUtils.h>
+#include <utilities/debugUtils.h>
 
 animCurveMatchCmd::~animCurveMatchCmd() {}
 

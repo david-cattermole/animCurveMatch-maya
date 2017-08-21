@@ -1,5 +1,5 @@
 /*
- *
+ * Uses Non-Linear Least Squares algorithm from levmar library to calculate animCurve attributes.
  */
 
 
