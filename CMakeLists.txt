@@ -3,27 +3,19 @@ project(mayaAnimCurveMatch)
 set(CMD_NAME animCurveMatch)
 set(CMAKE_CXX_STANDARD 11)
 # set(CMAKE_BUILD_TYPE DEBUG)
-set(CMAKE_BUILD_TYPE RELEASE)
+set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "The build type")
 
 # Maya SDK
-set(MAYA_ROOT "/usr/autodesk/maya2016")
-set(MAYA_INCLUDE ${MAYA_ROOT}/include)
-set(MAYA_LIB ${MAYA_ROOT}/lib)
+set(MAYA_INCLUDE_PATH "/usr/autodesk/maya2016/include" CACHE PATH "Maya include directory")
+set(MAYA_LIB_PATH "/usr/autodesk/maya2016/lib" CACHE PATH "Maya library directory")
 
 # Lev-Mar
-set(LEVMAR_ROOT "/home/davidc/bin/levmar/levmar-2.6")
-set(LEVMAR_INCLUDE ${LEVMAR_ROOT})
-set(LEVMAR_LIB ${LEVMAR_ROOT})
+SET(LEVMAR_INCLUDE_PATH "/usr/local/include" CACHE PATH "Levmar include directory")
+set(LEVMAR_LIB_PATH "/usr/local/lib" CACHE PATH "Levmar library directory")
 
-# Utilities
-set(UTILS_INCLUDE "/home/davidc/dev/cppTests/utilities")
-
-set(UTILITIES_FILES
-        include/utilities/debugUtils.h)
-
-#
+# Source
 set(SOURCE_FILES
-        ${UTILITIES_FILES}
+        include/utilities/debugUtils.h
         include/animCurveMatchCmd.h
         include/animCurveMatchUtils.h
         src/animCurveMatchCmd.cpp
@@ -31,15 +23,14 @@ set(SOURCE_FILES
 
 include_directories(
         include
-        ${UTILS_INCLUDE}
-        ${LEVMAR_INCLUDE}
-        ${MAYA_INCLUDE}
+        ${LEVMAR_INCLUDE_PATH}
+        ${MAYA_INCLUDE_PATH}
 )
 
 link_directories(
         ${LIBRARY_OUTPUT_PATH}
-        ${LEVMAR_LIB}
-        ${MAYA_LIB}
+        ${LEVMAR_LIB_PATH}
+        ${MAYA_LIB_PATH}
 )
 
 # 'animCurveMatchCmd' maya plugin library
@@ -49,8 +40,6 @@ target_link_libraries(${CMD_NAME}
         OpenMayaAnim
         Foundation
         levmar
-        lapack
-        blas
         m)
 set_target_properties(${CMD_NAME} PROPERTIES
         PREFIX "" # no 'lib' prefix to .so files
