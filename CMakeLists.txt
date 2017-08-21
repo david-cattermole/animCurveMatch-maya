@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 project(mayaAnimCurveMatch)
 set(CMD_NAME animCurveMatch)
 set(CMAKE_CXX_STANDARD 11)
-# set(CMAKE_BUILD_TYPE DEBUG)
 set(CMAKE_BUILD_TYPE RELEASE CACHE STRING "The build type")
 
 # Maya SDK
